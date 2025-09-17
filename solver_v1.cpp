@@ -2,41 +2,34 @@
 
 class Solution {
 public:
+    bool rows[9][10] = {};
+    bool cols[9][10] = {};
+    bool boxes[9][10] = {};
 
-    bool isValid(vector<vector<char>>&board, int row, int col, int num)
-    {
-        char c_num = num + '0';
-        for(int i = 0; i < 9; i++)
+    bool solve(vector<vector<char>>& board) {
+        for(int row_itr = 0; row_itr < 9; row_itr++)
         {
-            if (board[row][i] == c_num) return false;
-            if (board[i][col] == c_num) return false;
-            if (board[3*(row/3) + i/3][3*(col/3) + i%3] == c_num) return false;
-
-        }
-        return true;
-    }
-
-    bool solver_rec(vector<vector<char>>& board)
-    {
-        for(int row = 0; row < 9; row++)
-        {
-            for(int col = 0; col < 9; col++)
+            for(int col_itr = 0; col_itr < 9; col_itr++)
             {
-                if(board[row][col] == '.')
+                if(board[row_itr][col_itr] == '.')
                 {
                     for (int num = 1; num <= 9; num++)
                     {
-                        if(isValid(board, row, col, num))
+                        int box = (row_itr/3) * 3 + (col_itr/3);
+                        if (!rows[row_itr][num] && !cols[col_itr][num] && !boxes[box][num])
                         {
-                            board[row][col] = num + '0';
-                            if(solver_rec(board))
+                            board[row_itr][col_itr] = num + '0';
+                            rows[row_itr][num] = true;
+                            cols[col_itr][num] = true;
+                            boxes[box][num] = true;
+                            if (solve(board))
                             {
                                 return true;
                             }
-                            else
-                            {
-                                board[row][col] = '.';
-                            }
+                            board[row_itr][col_itr] = '.';
+                            rows[row_itr][num] = false;
+                            cols[col_itr][num] = false;
+                            boxes[box][num] = false;
                         }
                     }
                     return false;
@@ -46,6 +39,22 @@ public:
         return true;
     }
     void solveSudoku(vector<vector<char>>& board) {
-        solver_rec(board);
+        int box = 0;
+        int num = 0;
+        for(int row_itr = 0; row_itr < 9; row_itr++)
+        {
+            for(int col_itr = 0; col_itr < 9; col_itr++)
+            {
+                 if (board[row_itr][col_itr] != '.')
+                 {
+                    num = board[row_itr][col_itr] - '0';
+                    box = ((row_itr/3) * 3) + (col_itr/3);
+                    rows[row_itr][num] = true;
+                    cols[col_itr][num] = true;
+                    boxes[box][num] = true;
+                 }
+            }
+        }
+        solve(board);
     }
 };
