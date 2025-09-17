@@ -1,4 +1,6 @@
 // This is based on Sudoku Solver for leetcode. This is accepted as solution for https://leetcode.com/problems/sudoku-solver/description/
+// got early Pruning ideas from google search, there are few CNN like from this kaggle https://www.kaggle.com/datasets/rohanrao/sudoku which uses AI to solve it.
+
 
 class Solution {
 public:
