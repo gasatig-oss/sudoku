@@ -1,62 +1,192 @@
-// This is based on Sudoku Solver for leetcode. This is accepted as solution for https://leetcode.com/problems/sudoku-solver/description/
-// got early Pruning ideas from google search, there are few CNN like from this kaggle https://www.kaggle.com/datasets/rohanrao/sudoku which uses AI to solve it.
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <stdexcept>
 
+using namespace std;
 
-class Solution {
-public:
+class SudokuSolver
+{
+  private:
     bool rows[9][10] = {};
     bool cols[9][10] = {};
     bool boxes[9][10] = {};
+    int prefilled = 0;
 
-    bool solve(vector<vector<char>>& board) {
-        for(int row_itr = 0; row_itr < 9; row_itr++)
+    bool solve(vector<vector<char>>& board)
+    {
+      for(int row = 0; row < 9; row++)
+      {
+        for(int col = 0; col < 9; col++)
         {
-            for(int col_itr = 0; col_itr < 9; col_itr++)
+          if(board[row][col] == '.')
+          {
+            for (int num = 1; num < 10; num++)
             {
-                if(board[row_itr][col_itr] == '.')
+              int box = (row/3) * 3 + col/3;
+              if(!rows[row][num] && !cols[col][num] && !boxes[box][num])
+              {
+                board[row][col] = num + '0';
+                rows[row][num] = true;
+                cols[col][num] = true;
+                boxes[box][num] = true;
+                if (solve(board))
                 {
-                    for (int num = 1; num <= 9; num++)
-                    {
-                        int box = (row_itr/3) * 3 + (col_itr/3);
-                        if (!rows[row_itr][num] && !cols[col_itr][num] && !boxes[box][num])
-                        {
-                            board[row_itr][col_itr] = num + '0';
-                            rows[row_itr][num] = true;
-                            cols[col_itr][num] = true;
-                            boxes[box][num] = true;
-                            if (solve(board))
-                            {
-                                return true;
-                            }
-                            board[row_itr][col_itr] = '.';
-                            rows[row_itr][num] = false;
-                            cols[col_itr][num] = false;
-                            boxes[box][num] = false;
-                        }
-                    }
-                    return false;
+                  return true;
                 }
+                board[row][col] = '.';
+                rows[row][num] = false;
+                cols[col][num] = false;
+                boxes[box][num] = false;
+              }
             }
+            return false;
+          }
         }
-        return true;
+      }
+      return true;
     }
-    void solveSudoku(vector<vector<char>>& board) {
-        int box = 0;
-        int num = 0;
-        for(int row_itr = 0; row_itr < 9; row_itr++)
+    
+    void clearMap()
+    {
+      prefilled = 0;
+      for(int i = 0; i < 9; i++)
+      {
+        fill(begin(rows[i]), end(rows[i]), false);
+        fill(begin(cols[i]), end(cols[i]), false);
+        fill(begin(boxes[i]), end(boxes[i]), false);
+      }
+    }
+
+  public:
+    bool solveSudoku(vector<vector<char>>& board)
+    {
+      clearMap();
+      for(int row = 0; row < 9; row++)
+      {
+        for(int col = 0; col < 9; col++)
         {
-            for(int col_itr = 0; col_itr < 9; col_itr++)
+          if (board[row][col] != '.')
+          {
+            int box = (row/3) * 3 + (col/3);
+            int num = board[row][col] - '0';
+            if (rows[row][num] || cols[col][num] || boxes[box][num])
             {
-                 if (board[row_itr][col_itr] != '.')
-                 {
-                    num = board[row_itr][col_itr] - '0';
-                    box = ((row_itr/3) * 3) + (col_itr/3);
-                    rows[row_itr][num] = true;
-                    cols[col_itr][num] = true;
-                    boxes[box][num] = true;
-                 }
+              cout << "number already in some row/col/box  " << num << " \n";
+              cout << row << " " << col << " " << box << " " << " \n";
+              return false;
             }
+            rows[row][num] = true;
+            cols[col][num] = true;
+            boxes[box][num] = true;
+            prefilled++;
+          }
         }
-        solve(board);
+      }
+      return solve(board);
+    }
+    
+    string getGrade()
+    {
+      if(prefilled > 40) return "Easy";
+      if(prefilled > 35) return "Medium";
+      if(prefilled > 30) return "Hard";
+      return "Samurai";
     }
 };
+
+
+class PuzzleLoader
+{
+  public:
+    static vector<vector<vector<char>>> loadFile(string& fileName)
+    {
+      ifstream infile(fileName);
+
+      if (!infile.is_open())
+      {
+        throw runtime_error("Cannot open file!! " + fileName);
+      }
+
+      vector<vector<vector<char>>> puzzels;
+      vector<vector<char>> puzzel;
+      string line;
+
+      while(getline(infile ,line))
+      {
+        if(line.empty())
+        {
+          if(!puzzel.empty())
+          {
+            if(puzzel.size() == 9)
+            {
+              puzzels.push_back(puzzel);
+            }
+            else
+            {
+              cout<< "invalid puzzel" << "\n";
+            }
+            puzzel.clear();
+          }
+          continue;
+        }
+        if(line.size() != 9)
+        {
+          cout << "Not a valid puzzel input " << line << "\n";
+          continue;
+        }
+        puzzel.emplace_back(line.begin(), line.end());
+      }
+      
+      if(!puzzel.empty())
+      {
+        puzzels.push_back(puzzel);
+      }
+
+      return puzzels;
+    }
+};
+
+void printSolution(vector<vector<char>>& board)
+{
+  for(int row = 0; row < 9; row++)
+  {
+    for(int col = 0; col < 9; col++)
+    {
+      cout << board[row][col];
+    }
+    cout << "\n";
+  }
+  cout << "\n";
+}
+
+int main()
+{
+  string fileName = "sudoku.txt";
+  try
+  {
+    auto puzzles = PuzzleLoader::loadFile(fileName);
+    SudokuSolver solver;
+    for (size_t i = 0; i < puzzles.size(); i++)
+    {
+      cout << "Puzzle number " << i + 1 << "\n";
+      if(solver.solveSudoku(puzzles[i]))
+      {
+        cout << "Grade of puzzel is " << solver.getGrade() << "\n";
+        printSolution(puzzles[i]);
+      }
+      else
+      {
+        cout << "there is no valid solution for this puzzel" << "\n";
+      }
+      
+    }
+  }
+  catch (const exception ex)
+  {
+    cout << "Error:    " << ex.what() << "\n";
+    return -1;
+  }
+  return 0;
+}
